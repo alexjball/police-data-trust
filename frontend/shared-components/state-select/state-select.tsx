@@ -36,6 +36,7 @@ export default function USStateSelect({ isSubmitted }: USStateSelectProps) {
         name={inputId}
         type="text"
         aria-required="true"
+        aria-describedby={!isValid ? errorId : null}
         onChange={handleInputChange}
       ></input>
       <datalist id={listId}>

@@ -40,7 +40,7 @@ export default function EnrollmentInput({ inputName, isSubmitted, isShown, size 
         type={displayType}
         value={inputValue}
         aria-required="true" 
-        aria-describedby={errorId}
+        aria-describedby={!isValid ? errorId : null}
         onChange={handleInputChange}
       />
       {!isValid && <FormLevelError errorId={errorId} errorMessage={errorMessage}/>}

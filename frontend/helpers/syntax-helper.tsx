@@ -1,5 +1,5 @@
 function capitalizeFirstChar(inputString: string): string {
-  return inputString.charAt(0).toUpperCase() + inputString.slice(1) 
+  return inputString.charAt(0).toUpperCase() + inputString.toLowerCase().slice(1) 
 }
 
 function getTitleCaseFromCamel(camelCase: string): string {
@@ -7,4 +7,7 @@ function getTitleCaseFromCamel(camelCase: string): string {
   return capitalizeFirstChar(spacedCamelCase)
 }
 
-export{ getTitleCaseFromCamel }
+export { 
+  capitalizeFirstChar,
+  getTitleCaseFromCamel 
+}

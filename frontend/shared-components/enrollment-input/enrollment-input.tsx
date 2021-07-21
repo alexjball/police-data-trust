@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react'
+import React, { FormEvent, useEffect, useState } from 'react'
 import styles from './enrollment-input.module.css'
 import { FormLevelError } from '../index'
 import { getTitleCaseFromCamel } from '../../helpers/syntax-helper'
@@ -15,16 +15,18 @@ export default function EnrollmentInput({ inputName, isSubmitted, isShown, size 
   const displayType: string = isShown ? 'text' : inputType
   
   const ifNumber = (value: number): number | null => { return displayType === 'number' ? value : null }
-  const checkIsValid = (value: string): boolean => { return !isSubmitted || pattern.test(value) }
+  const checkIsValid = (value: string): boolean => { return pattern.test(value) }
 
   const [inputValue, setInputValue] = useState('')
-  const [isValid, setIsValid] = useState(checkIsValid(''))
+  const [isValid, setIsValid] = useState(true)
 
-  function handleChange({ target: { value } }: FormEvent<HTMLInputElement>): void {
+  function handleInputChange({ target: { value } }: FormEvent<HTMLInputElement>): void {
     value = value.toString()
+    if (isSubmitted) setIsValid(checkIsValid(value))
     setInputValue(value)
-    setIsValid(checkIsValid(value))
   }
+
+  useEffect(() => { if (isSubmitted) setIsValid(checkIsValid(inputValue)) }, [isSubmitted])
 
   return (
     <div className={`defaultInputContainer ${inputContainer} ${!isValid && 'hasError'}`}>
@@ -39,7 +41,7 @@ export default function EnrollmentInput({ inputName, isSubmitted, isShown, size 
         value={inputValue}
         aria-required="true" 
         aria-describedby={errorId}
-        onChange={handleChange}
+        onChange={handleInputChange}
       />
       {!isValid && <FormLevelError errorId={errorId} errorMessage={errorMessage}/>}
     </div>

@@ -1,7 +1,7 @@
 import React, { FormEvent, useState } from "react"
 import styles from "./passport.module.css"
 import { 
-  ResponseTextArea, EnrollmentCTA, EnrollmentHeader, EnrollmentInput, USStateSelect 
+  ResponseTextArea, EnrollmentCTA, EnrollmentHeader, EnrollmentInput, USAStateInput 
 } from "../../shared-components"
 import { CTATypes, EnrollmentInputNames } from '../../models'
 
@@ -29,7 +29,7 @@ export default function Passport({ name = ['Herbert Placeholder'] }) {
         <fieldset>
           <EnrollmentInput inputName={STREET_ADDRESS} size="large" isSubmitted={isSubmitted}/>
           <EnrollmentInput inputName={CITY_TOWN} isSubmitted={isSubmitted}/>
-          <USStateSelect isSubmitted={isSubmitted} />
+          <USAStateInput isSubmitted={isSubmitted} />
           <EnrollmentInput inputName={ZIP_CODE} size="small" isSubmitted={isSubmitted}/>
         </fieldset>
         <ResponseTextArea isSubmitted={isSubmitted} />

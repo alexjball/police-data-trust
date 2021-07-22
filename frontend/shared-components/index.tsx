@@ -6,6 +6,7 @@ import EnrollmentInput from './enrollment-input/enrollment-input'
 import FormLevelError from './error-form-level/error-form-level'
 import InfoTooltip from './info-tooltip/info-tooltip'
 import Logo from './logo/logo'
+import PasswordAid from './password-aid/password-aid'
 import USAStateInput from './state-input/state-input'
 
 export {
@@ -16,5 +17,6 @@ export {
   FormLevelError,
   InfoTooltip,
   Logo,
+  PasswordAid,
   USAStateInput
 }

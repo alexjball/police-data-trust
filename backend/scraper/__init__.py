@@ -1,0 +1,1 @@
+from .mapping_police_violence import make_all_tables

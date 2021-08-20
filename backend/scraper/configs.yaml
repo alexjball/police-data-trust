@@ -1,5 +1,6 @@
 resources:
   varname_crosswalk: 'backend/scraper/varnames_crosswalk.csv'
+  spreadsheet_output: full_database.xlsx
 
 sources:
   mpv:

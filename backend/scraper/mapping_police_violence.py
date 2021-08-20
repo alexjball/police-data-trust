@@ -67,22 +67,33 @@ def make_single_table(table, dat, configs):
     return dat[dat.columns[dat.columns.isin(cols)]]
 
 
-def extract_all_subfolders(head_directory, data_source, xwalk, dat, configs):
+def extract_all_subfolders(
+    head_directory, data_source, xwalk, dat, configs
+) -> pd.DataFrame:
     if os.path.isdir(head_directory):
         for filename in os.listdir(head_directory):
-            if configs["sources"][data_source]["subdirectory"] not in filename\
-                    and configs["sources"][data_source]["subdirectory"]\
-                    != "None":
+            if (
+                configs["sources"][data_source]["subdirectory"] not in filename
+                and configs["sources"][data_source]["subdirectory"] != "None"
+            ):
                 continue
             if dat is None or len(dat) == 0:
                 dat = extract_all_subfolders(
-                    head_directory + "/" + filename, data_source,
-                    xwalk, dat, configs)
+                    head_directory + "/" + filename,
+                    data_source,
+                    xwalk,
+                    dat,
+                    configs,
+                )
             else:
                 dat = dat.append(
                     extract_all_subfolders(
-                        head_directory + "/" + filename, data_source,
-                        xwalk, dat, configs)
+                        head_directory + "/" + filename,
+                        data_source,
+                        xwalk,
+                        dat,
+                        configs,
+                    )
                 )
         return dat
     elif head_directory.endswith("csv.gz"):
@@ -98,7 +109,7 @@ def extract_all_subfolders(head_directory, data_source, xwalk, dat, configs):
         return data
 
 
-def make_tables_data_source(data_source, xwalk, configs):
+def load_data_source(data_source, xwalk, configs):
     if configs["sources"][data_source]["url"].endswith(".xlsx"):
         dat_raw = pd.read_excel(configs["sources"][data_source]["url"])
         dat = map_varnames(dat_raw, data_source, xwalk, configs)
@@ -109,9 +120,16 @@ def make_tables_data_source(data_source, xwalk, configs):
         z.extractall(configs["sources"][data_source]["location"])
         dat_raw = extract_all_subfolders(
             configs["sources"][data_source]["headdirectory"],
-            data_source, xwalk, [], configs)
-        dat_raw = dat_raw.groupby([configs["sources"][data_source]["id"]])\
-            .first().reset_index()
+            data_source,
+            xwalk,
+            [],
+            configs,
+        )
+        dat_raw = (
+            dat_raw.groupby([configs["sources"][data_source]["id"]])
+            .first()
+            .reset_index()
+        )
         dat = map_varnames(dat_raw, data_source, xwalk, configs)
         dat = gen_ids(dat, data_source)
     elif configs["sources"][data_source]["url"].endswith(".csv"):
@@ -127,6 +145,11 @@ def make_tables_data_source(data_source, xwalk, configs):
         dat = gen_ids(dat, data_source)
 
     dat = dat.loc[~dat.index.duplicated(keep="first")]
+    return dat
+
+
+def make_tables_data_source(data_source, xwalk, configs):
+    dat = load_data_source(data_source, xwalk, configs)
     dat.to_csv(data_source + ".csv", index=True, header=True)
     table_names = list(configs["tables"].keys())
     table_list = [make_single_table(x, dat, configs) for x in table_names]
@@ -134,14 +157,28 @@ def make_tables_data_source(data_source, xwalk, configs):
     return table_dict
 
 
+def read_configs():
+    with open(r"backend/scraper/configs.yaml") as file:
+        return yaml.load(file, Loader=yaml.FullLoader)
+
+
+def make_hdf5():
+    configs = read_configs()
+    xwalk = pd.read_csv(configs["resources"]["varname_crosswalk"])
+    dfs = [
+        load_data_source(source, xwalk, configs)
+        for source in configs["sources"].keys()
+    ]
+    all_records = pd.concat(dfs)
+    all_records.to_hdf("all_records.h5", key="records", format="table")
+
+
 def make_all_tables():
     """Pulls public data and combines into data table for relational databases
     output: dict of dataframes, one element per table described in configs
     """
 
-    # read configs
-    with open(r"backend/scraper/configs.yaml") as file:
-        configs = yaml.load(file, Loader=yaml.FullLoader)
+    configs = read_configs()
     xwalk = pd.read_csv(configs["resources"]["varname_crosswalk"])
 
     # make data tables
@@ -164,7 +201,7 @@ def make_all_tables():
         sub_table = full_df
         table_list.append(sub_table)
     table_dict = {table_names[i]: table_list[i] for i in range(len(table_list))}
-    writer = pd.ExcelWriter("full_database.xlsx", engine="xlsxwriter")
+    writer = pd.ExcelWriter(configs["spreadsheet_output"], engine="xlsxwriter")
 
     # Write each dataframe to a different worksheet.
     for key in table_dict:

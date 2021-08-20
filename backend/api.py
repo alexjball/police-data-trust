@@ -8,6 +8,7 @@ from .config import get_config_from_env
 from .database import db
 from .database import db_cli
 from .routes.incidents import bp as incidents_bp
+
 # from .routes.auth import bp as auth_bp
 from .utils import dev_only
 
@@ -72,13 +73,18 @@ def register_commands(app: Flask):
                 subprocess.call(["pip-compile", filename, *ctx.args])
 
     @app.cli.command("scrape")
+    @dev_only
     def scrape_command():
         """Scrape from public data into the database.
 
         This is a handy way to populate the database to start with publicly
         available data.
         """
-        pass
+        from .scraper import make_all_tables
+        from .scraper import load_spreadsheet
+
+        make_all_tables()
+        load_spreadsheet()
 
 
 def register_routes(app: Flask):
@@ -110,7 +116,6 @@ def register_misc(app: Flask):
     # Client that makes testing a bit easier.
 
     class FlaskClientWithDefaultHeaders(FlaskClient):
-
         def post(self, *args, **kwargs):
             kwargs.setdefault("headers", {"Content-Type": "application/json"})
             return super().post(*args, **kwargs)

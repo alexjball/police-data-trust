@@ -1,9 +1,8 @@
 """Define the SQL classes for Users."""
 import enum
 
-from ..core import db
-from ..core import CrudMixin
 
+from ..core import CrudMixin, SourceMixin, db
 
 # Question: Should we be doing string enums?
 
@@ -58,14 +57,21 @@ class VictimStatus(enum.Enum):
 #  implement them accordingly.
 
 
-class Incident(db.Model, CrudMixin):
+class Incident(db.Model, CrudMixin, SourceMixin):
     """The incident table is the fact table."""
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     time_of_incident = db.Column(db.DateTime)
+    complaint_date = db.Column(db.Date)
+    closed_date = db.Column(db.Date)
     location = db.Column(db.Text)  # TODO: location object
+    # Float is double precision (8 bytes) by default in Postgres
+    longitude = db.Column(db.Float)
+    latitude = db.Column(db.Float)
     # TODO: neighborhood seems like a weird identifier that may not always
     #  apply in consistent ways across municipalities.
     neighborhood = db.Column(db.Text)
+    description = db.Column(db.Text)
     stop_type = db.Column(db.Text)  # TODO: enum
     call_type = db.Column(db.Text)  # TODO: enum
     has_multimedia = db.Column(db.Boolean)
@@ -77,7 +83,11 @@ class Incident(db.Model, CrudMixin):
     criminal_case_brought = db.Column(db.Boolean)
     case_id = db.Column(db.Integer)  # TODO: foreign key of some sort?
     victims = db.relationship("Victim", backref="incident")
-    descriptions = db.relationship("Description", backref="incident")
+    # TODO: Remove this. incident-officer relationship is many-many using
+    # accusation as the join table.
+    officers = db.relationship("Officer", backref="incident")
+    department = db.Column(db.Text)
+    # descriptions = db.relationship("Description", backref="incident")
     tags = db.relationship("Tag", backref="incident")
     participants = db.relationship("Participant", backref="incident")
     multimedias = db.relationship("Multimedia", backref="incident")
@@ -86,6 +96,7 @@ class Incident(db.Model, CrudMixin):
     actions = db.relationship("Action", backref="incident")
     use_of_force = db.relationship("UseOfForce", backref="incident")
     legal_case = db.relationship("LegalCase", backref="incident")
+    accusations = db.relationship("Accusation", backref="incident")
 
 
 class Description(db.Model):

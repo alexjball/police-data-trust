@@ -2,6 +2,7 @@
 .vscode/
 .history/
 .idea/
+excel_outputs/
 
 # MacOS
 .DS_Store
@@ -37,6 +38,7 @@ eggs/
 lib/
 lib64/
 parts/
+requirements/core.txt
 sdist/
 var/
 wheels/
@@ -101,6 +103,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.python-version
+.devcontainer
+.pdt
 
 # mkdocs documentation
 /site
@@ -109,3 +114,10 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# In case one gets installed by accident
+/node_modules
+
+# Data scraper
+/backend/scraper/data_scrapers/notebooks/chicago-police-data
+/backend/scraper/data_scrapers/counted/scraper_data

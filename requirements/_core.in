@@ -3,7 +3,6 @@ celery
 flake8
 flask
 flask-sqlalchemy
-flask_pydantic
 gunicorn
 pandas
 pip-tools
@@ -12,9 +11,10 @@ pydantic-sqlalchemy
 pytest
 pytest-env
 pytest-cov
+pytest-postgresql
 pytest-flask-sqlalchemy
+pytest-mock
 python-dotenv
-flask-login
 flask-user<0.7
 wtforms
 SQLAlchemy==1.3.23
@@ -25,3 +25,11 @@ requests
 email-validator
 flask-serialize
 Flask-DB
+Flask-JWT-Extended
+email-validator
+flask_cors
+openpyxl
+xlsxwriter
+numpy
+spectree
+jupyter

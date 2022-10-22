@@ -4,24 +4,21 @@ setting up and tearing down the database.
 Do not import anything directly from `backend.database._core`. Instead, import
 from `backend.database`.
 """
-from typing import Optional, Any
 import os
+from typing import Any, Optional
 
-import pandas as pd
 import click
-
-from flask import current_app
-from flask import abort
-from flask.cli import AppGroup
-from flask.cli import with_appcontext
-from werkzeug.utils import secure_filename
-
-from sqlalchemy.exc import ResourceClosedError
-from flask_sqlalchemy import SQLAlchemy
-
+import pandas as pd
 import psycopg2.errors
+from flask import abort, current_app
+from flask.cli import AppGroup, with_appcontext
+from flask_sqlalchemy import SQLAlchemy
 from psycopg2 import connect
 from psycopg2.extensions import connection
+from sqlalchemy import ForeignKey
+from sqlalchemy.exc import ResourceClosedError
+from sqlalchemy.ext.declarative import declared_attr
+from werkzeug.utils import secure_filename
 
 from ..config import TestingConfig
 from ..utils import dev_only
@@ -53,6 +50,34 @@ class CrudMixin:
         return obj
 
 
+class SourceMixin:
+    """Adds support for unique, external source ID's"""
+
+    # Identifies the source dataset or organization
+    @declared_attr
+    def source(self):
+        return db.Column(db.Text, ForeignKey("source.id"))
+
+    # Identifies the unique primary key in the source
+    source_id = db.Column(db.Text)
+
+    def __init_subclass__(cls, **kwargs):
+        # Require that source ID's be unique within each source. Postgres does
+        # not enforce uniqueness if either value is null.
+        # https://www.postgresql.org/docs/9.0/ddl-constraints.html#AEN2445
+        uc = db.UniqueConstraint(
+            "source", "source_id", name=f"{cls.__name__.lower()}_source_uc"
+        )
+
+        cls.__table_args__ = tuple(
+            a
+            for a in (uc, getattr(cls, "__table_args__", None))
+            if a is not None
+        )
+
+        super().__init_subclass__(**kwargs)
+
+
 QUERIES_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "queries")
 )
@@ -82,13 +107,15 @@ def execute_query(filename: str) -> Optional[pd.DataFrame]:
 @click.pass_context
 def db_cli(ctx: click.Context):
     """Collection of database commands."""
-    ctx.obj = connect(
+    conn = connect(
         user=current_app.config["POSTGRES_USER"],
         password=current_app.config["POSTGRES_PASSWORD"],
         host=current_app.config["POSTGRES_HOST"],
         port=current_app.config["POSTGRES_PORT"],
         dbname="postgres",
     )
+    conn.autocommit = True
+    ctx.obj = conn
 
 
 pass_psql_admin_connection = click.make_pass_decorator(connection)
@@ -111,7 +138,6 @@ def create_database(
     """Create the database from nothing."""
     database = current_app.config["POSTGRES_DB"]
     cursor = conn.cursor()
-    cursor.execute("ROLLBACK")
 
     if overwrite:
         cursor.execute(
@@ -125,7 +151,6 @@ def create_database(
         cursor.execute(f"CREATE DATABASE {database};")
     except psycopg2.errors.lookup("42P04"):
         click.echo(f"Database {database!r} already exists.")
-        cursor.execute("ROLLBACK")
     else:
         click.echo(f"Created database {database!r}.")
 
@@ -166,7 +191,6 @@ def delete_database(conn: connection, test_db: bool):
         database = current_app.config["POSTGRES_DB"]
 
     cursor = conn.cursor()
-    cursor.execute("ROLLBACK")
 
     # Don't validate name for `police_data_test`.
     if database != TestingConfig.POSTGRES_DB:
@@ -188,6 +212,5 @@ def delete_database(conn: connection, test_db: bool):
         cursor.execute(f"DROP DATABASE {database};")
     except psycopg2.errors.lookup("3D000"):
         click.echo(f"Database {database!r} does not exist.")
-        cursor.execute("ROLLBACK")
     else:
         click.echo(f"Database {database!r} was deleted.")

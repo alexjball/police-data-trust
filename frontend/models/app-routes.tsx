@@ -1,5 +1,9 @@
 export enum AppRoutes {
-  LOGIN = '/login',
-  REGISTER = '/register',
-  DASHBOARD = '/dashboard'
+  DASHBOARD = "/search",
+  FORGOT = "/forgot",
+  RESET = "/reset",
+  LOGIN = "/login",
+  PASSPORT = "/passport",
+  PROFILE = "/profile",
+  REGISTER = "/register"
 }
